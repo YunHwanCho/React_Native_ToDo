@@ -11,6 +11,7 @@ import {
   TextInput,
   ScrollView,
   Alert,
+  Platform
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { theme } from "./color";
@@ -23,14 +24,27 @@ export default function App() {
   const work = () => setWorking(true);
   const [text, setText] = useState("");
   const onChangeText = (payload) => setText(payload);
+  const [now, setNow] = useState(true)
   const saveToDos = async (toSave) => {
     await AsyncStorage.setItem(STOAGE_KEY, JSON.stringify(toSave));
   };
 
+  const savePos = () => {
+    if (working === now){
+      {work}
+    }else{
+      {travel}
+    }
+  }
+
   const loadToDos = async () => {
     try {
       const s = await AsyncStorage.getItem(STOAGE_KEY);
-      setToDos(JSON.parse(s));
+      if(s){
+        setToDos(JSON.parse(s));
+
+      }
+      
     } catch (e) {
       console.log("에러났어욤~");
     }
@@ -40,6 +54,9 @@ export default function App() {
 
   useEffect(() => {
     loadToDos();
+  }, []);
+  useEffect(() => {
+    savePos();
   }, []);
   const addToDo = async () => {
     if (text === "") {
@@ -53,19 +70,33 @@ export default function App() {
   };
   console.log(toDos);
   const deleteToDos = (key) => {
-    Alert.alert("삭제하시겠습니까", "Are you sure?", [
-      {
-        text: "Yes",
-        style : "destructive",
-        onPress: async () => {
-          const newToDos = { ...toDos };
-          delete newToDos[key];
-          setToDos(newToDos);
-          await saveToDos(newToDos);
+    if(Platform.OS === "web"){
+      const ok = confirm("Do you want to delete this Content?");
+      if(ok){
+        const newToDos = { ...toDos };
+            delete newToDos[key];
+            setToDos(newToDos);
+            saveToDos(newToDos);
+
+      }
+
+    }else{
+      Alert.alert("삭제하시겠습니까", "Are you sure?", [
+        {
+          text: "Yes",
+          style : "destructive",
+          onPress: async () => {
+            const newToDos = { ...toDos };
+            delete newToDos[key];
+            setToDos(newToDos);
+            saveToDos(newToDos);
+          },
         },
-      },
-      { text: "No" },
-    ]);
+        { text: "No" },
+      ]);
+
+    }
+    
   };
 
   return (
@@ -73,7 +104,7 @@ export default function App() {
       <View style={styles.header}>
         <TouchableOpacity onPress={work}>
           <Text
-            style={{ ...styles.btnText, color: working ? "white" : theme.grey }}
+            style={{ ...styles.btnText, color : working ? "white" : theme.grey }}
           >
             Work
           </Text>
